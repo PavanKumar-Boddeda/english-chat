@@ -102,7 +102,7 @@ return(
 
 <div className="app">
 
-<h1>English Learning Chat</h1>
+<h1>English Practice Chat</h1>
 
 <div className="chat-box">
 
