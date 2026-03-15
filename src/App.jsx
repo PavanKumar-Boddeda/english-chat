@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { db } from "./firebase";
-
 import {
   collection,
   addDoc,
@@ -13,10 +12,9 @@ import {
 import "./App.css";
 
 function correctSentence(sentence){
-  if(!sentence) return "";
+  if(!sentence) return sentence;
 
   let s = sentence.trim();
-
   s = s.charAt(0).toUpperCase() + s.slice(1);
 
   if(!/[.!?]$/.test(s)){
@@ -80,23 +78,13 @@ export default function App(){
   const formatTime = (timestamp)=>{
     if(!timestamp) return "";
 
-    const formatTime = (timestamp)=>{
-
-  if(!timestamp || !timestamp.toDate) return "";
-
-  try{
     const date = timestamp.toDate();
 
     return date.toLocaleTimeString([],{
       hour:"2-digit",
       minute:"2-digit"
     });
-
-  }catch(err){
-    return "";
-  }
-
-}
+  };
 
   if(!name){
 
@@ -192,4 +180,3 @@ export default function App(){
   );
 
 }
-
