@@ -183,8 +183,8 @@ export default function App(){
 {msg.corrected && msg.corrected !== msg.text && (
 
   <div className="correction">
-    ✓ Correct: {msg.corrected}
-  </div>
+  ✓ Correct: {msg.corrected ? msg.corrected : msg.text}
+</div>
 
 )}
 
