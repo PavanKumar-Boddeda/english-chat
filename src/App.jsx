@@ -12,54 +12,19 @@ import {
 
 import "./App.css";
 
-async function correctSentence(sentence){
+function correctSentence(sentence){
+  if(!sentence) return "";
 
-if(!sentence) return sentence;
+  let s = sentence.trim();
 
-try{
+  s = s.charAt(0).toUpperCase() + s.slice(1);
 
-const response = await fetch(
-"https://api.languagetool.org/v2/check",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/x-www-form-urlencoded"
-},
-body:`text=${encodeURIComponent(sentence)}&language=en-US`
+  if(!/[.!?]$/.test(s)){
+    s += ".";
+  }
+
+  return s;
 }
-);
-
-const data = await response.json();
-
-let corrected = sentence;
-
-data.matches.forEach(match=>{
-
-if(match.replacements.length>0){
-
-const replacement = match.replacements[0].value;
-
-corrected =
-corrected.substring(0,match.offset) +
-replacement +
-corrected.substring(match.offset + match.length);
-
-}
-
-});
-
-return corrected;
-
-}catch(error){
-
-console.log("Correction error",error);
-
-return sentence;
-
-}
-
-}
-
 
 export default function App(){
 
@@ -74,16 +39,11 @@ export default function App(){
 
     const q = query(
       collection(db,"messages"),
-      orderBy("time","asc")
+      orderBy("time")
     );
 
     const unsub = onSnapshot(q,(snapshot)=>{
-      const msgs = snapshot.docs.map(doc=>({
-        id:doc.id,
-        ...doc.data()
-      }));
-
-      setMessages(msgs);
+      setMessages(snapshot.docs.map(doc=>doc.data()));
     });
 
     return ()=>unsub();
@@ -94,24 +54,21 @@ export default function App(){
     bottomRef.current?.scrollIntoView({behavior:"smooth"});
   },[messages]);
 
-  const sendMessage = async () => {
+  const sendMessage = async ()=>{
 
-  if(!text.trim()) return;
+    if(!text.trim()) return;
 
-  const corrected = await correctSentence(text);
+    const corrected = correctSentence(text);
 
-  await addDoc(collection(db,"messages"),{
+    await addDoc(collection(db,"messages"),{
+      text:text,
+      corrected:corrected,
+      name:name,
+      time:serverTimestamp()
+    });
 
-    text: text,
-    corrected: corrected,
-    name: name,
-    time: serverTimestamp()
-
-  });
-
-  setText("");
-
-};
+    setText("");
+  };
 
   const saveName = ()=>{
     if(!nameInput.trim()) return;
@@ -121,7 +78,7 @@ export default function App(){
   };
 
   const formatTime = (timestamp)=>{
-    if(!timestamp || !timestamp.toDate) return "";
+    if(!timestamp) return "";
 
     const date = timestamp.toDate();
 
@@ -159,25 +116,44 @@ export default function App(){
 
     <div className="app">
 
-      <div className="header">
-        English Practice Chat
-      </div>
+      <h1>English Practice Chat</h1>
 
       <div className="chat-box">
 
-        {messages.map((msg)=>{
+        {messages.map((msg,i)=>{
 
           const mine = msg.name === name;
 
           return(
 
-           <div className="message-text">
-  {msg.text}
-</div>
+            <div
+              key={i}
+              className={mine ? "my-message" : "other-message"}
+            >
 
-<div className="correction">
-  ✓ Correct: {msg.corrected || msg.text}
-</div>
+              <div className="message-header">
+
+                <b>{msg.name}</b>
+
+                <span className="time">
+                  {formatTime(msg.time)}
+                </span>
+
+              </div>
+
+              <div className="message-text">
+                {msg.text}
+              </div>
+
+              {msg.corrected && msg.corrected !== msg.text && (
+
+                <div className="correction">
+                  ✓ Correct: {msg.corrected}
+                </div>
+
+              )}
+
+            </div>
 
           );
 
