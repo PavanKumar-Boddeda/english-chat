@@ -80,13 +80,23 @@ export default function App(){
   const formatTime = (timestamp)=>{
     if(!timestamp) return "";
 
+    const formatTime = (timestamp)=>{
+
+  if(!timestamp || !timestamp.toDate) return "";
+
+  try{
     const date = timestamp.toDate();
 
     return date.toLocaleTimeString([],{
       hour:"2-digit",
       minute:"2-digit"
     });
-  };
+
+  }catch(err){
+    return "";
+  }
+
+}
 
   if(!name){
 
