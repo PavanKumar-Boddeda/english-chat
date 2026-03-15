@@ -13,16 +13,36 @@ import {
 import "./App.css";
 
 function correctSentence(sentence){
-  if(!sentence) return sentence;
 
-  let s = sentence.trim();
-  s = s.charAt(0).toUpperCase() + s.slice(1);
+if(!sentence) return sentence;
 
-  if(!/[.!?]$/.test(s)){
-    s += ".";
-  }
+let s = sentence.trim();
 
-  return s;
+/* Capitalize first letter */
+s = s.charAt(0).toUpperCase() + s.slice(1);
+
+/* Basic word corrections */
+const fixes = {
+"hlo":"Hello",
+"helo":"Hello",
+"hiu":"Hi",
+"msg":"message",
+"pls":"please",
+"plz":"please"
+};
+
+Object.keys(fixes).forEach(word=>{
+const regex = new RegExp("\\b"+word+"\\b","gi");
+s = s.replace(regex,fixes[word]);
+});
+
+/* punctuation */
+if(!/[.!?]$/.test(s)){
+s += ".";
+}
+
+return s;
+
 }
 
 export default function App(){
@@ -151,9 +171,13 @@ export default function App(){
   {msg.text}
 </div>
 
-<div className="correction">
-  ✓ Correct: {msg.corrected}
-</div>
+{msg.corrected && msg.corrected !== msg.text && (
+
+  <div className="correction">
+    ✓ Correct: {msg.corrected}
+  </div>
+
+)}
 
             </div>
 
