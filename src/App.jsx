@@ -34,18 +34,25 @@ const data = await response.json();
 let corrected = sentence;
 
 data.matches.forEach(match=>{
-const replacement = match.replacements[0];
-if(replacement){
+
+if(match.replacements.length>0){
+
+const replacement = match.replacements[0].value;
+
 corrected =
 corrected.substring(0,match.offset) +
-replacement.value +
+replacement +
 corrected.substring(match.offset + match.length);
+
 }
+
 });
 
 return corrected;
 
 }catch(error){
+
+console.log("Correction error",error);
 
 return sentence;
 
@@ -87,21 +94,24 @@ export default function App(){
     bottomRef.current?.scrollIntoView({behavior:"smooth"});
   },[messages]);
 
-  const sendMessage = async ()=>{
+  const sendMessage = async () => {
 
-    if(!text.trim()) return;
+  if(!text.trim()) return;
 
-    const corrected = await correctSentence(text)
+  const corrected = await correctSentence(text);
 
-    await addDoc(collection(db,"messages"),{
-      text:text,
-      corrected:corrected,
-      name:name,
-      time:serverTimestamp()
-    });
+  await addDoc(collection(db,"messages"),{
 
-    setText("");
-  };
+    text: text,
+    corrected: corrected,
+    name: name,
+    time: serverTimestamp()
+
+  });
+
+  setText("");
+
+};
 
   const saveName = ()=>{
     if(!nameInput.trim()) return;
@@ -161,34 +171,13 @@ export default function App(){
 
           return(
 
-            <div
-              key={msg.id}
-              className={mine ? "my-message" : "other-message"}
-            >
-
-              <div className="message-header">
-
-                <b>{msg.name}</b>
-
-                <span className="time">
-                  {formatTime(msg.time)}
-                </span>
-
-              </div>
-
-  <div className="message-text">
+           <div className="message-text">
   {msg.text}
 </div>
 
-{msg.corrected && msg.corrected !== msg.text && (
-
-  <div className="correction">
-  ✓ Correct: {msg.corrected ? msg.corrected : msg.text}
+<div className="correction">
+  ✓ Correct: {msg.corrected || msg.text}
 </div>
-
-)}
-
-            </div>
 
           );
 
