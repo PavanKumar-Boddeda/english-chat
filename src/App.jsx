@@ -12,38 +12,47 @@ import {
 
 import "./App.css";
 
-function correctSentence(sentence){
+async function correctSentence(sentence){
 
 if(!sentence) return sentence;
 
-let s = sentence.trim();
+try{
 
-/* Capitalize first letter */
-s = s.charAt(0).toUpperCase() + s.slice(1);
+const response = await fetch(
+"https://api.languagetool.org/v2/check",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/x-www-form-urlencoded"
+},
+body:`text=${encodeURIComponent(sentence)}&language=en-US`
+}
+);
 
-/* Basic word corrections */
-const fixes = {
-"hlo":"Hello",
-"helo":"Hello",
-"hiu":"Hi",
-"msg":"message",
-"pls":"please",
-"plz":"please"
-};
+const data = await response.json();
 
-Object.keys(fixes).forEach(word=>{
-const regex = new RegExp("\\b"+word+"\\b","gi");
-s = s.replace(regex,fixes[word]);
+let corrected = sentence;
+
+data.matches.forEach(match=>{
+const replacement = match.replacements[0];
+if(replacement){
+corrected =
+corrected.substring(0,match.offset) +
+replacement.value +
+corrected.substring(match.offset + match.length);
+}
 });
 
-/* punctuation */
-if(!/[.!?]$/.test(s)){
-s += ".";
+return corrected;
+
+}catch(error){
+
+return sentence;
+
 }
 
-return s;
-
 }
+
 
 export default function App(){
 
@@ -82,7 +91,7 @@ export default function App(){
 
     if(!text.trim()) return;
 
-    const corrected = correctSentence(text);
+    const corrected = await correctSentence(text)
 
     await addDoc(collection(db,"messages"),{
       text:text,
