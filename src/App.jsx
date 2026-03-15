@@ -1,166 +1,183 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
 import { db } from "./firebase";
 import {
-collection,
-addDoc,
-query,
-orderBy,
-onSnapshot,
-serverTimestamp
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
 } from "firebase/firestore";
 
 import "./App.css";
 
 function correctSentence(sentence){
-if(!sentence) return sentence
+  if(!sentence) return sentence;
 
-const first = sentence.charAt(0).toUpperCase()
-const rest = sentence.slice(1)
+  let s = sentence.trim();
+  s = s.charAt(0).toUpperCase() + s.slice(1);
 
-return first + rest
+  if(!/[.!?]$/.test(s)){
+    s += ".";
+  }
+
+  return s;
 }
 
 export default function App(){
 
-const [messages,setMessages] = useState([])
-const [text,setText] = useState("")
-const [name,setName] = useState(localStorage.getItem("chat-name") || "")
-const [nameInput,setNameInput] = useState("")
+  const [messages,setMessages] = useState([]);
+  const [text,setText] = useState("");
+  const [name,setName] = useState(localStorage.getItem("chat-name"));
+  const [nameInput,setNameInput] = useState("");
 
-useEffect(()=>{
+  const bottomRef = useRef(null);
 
-const q = query(
-collection(db,"messages"),
-orderBy("time")
-)
+  useEffect(()=>{
 
-const unsub = onSnapshot(q,(snapshot)=>{
-setMessages(snapshot.docs.map(doc=>doc.data()))
-})
+    const q = query(
+      collection(db,"messages"),
+      orderBy("time")
+    );
 
-return ()=>unsub()
+    const unsub = onSnapshot(q,(snapshot)=>{
+      setMessages(snapshot.docs.map(doc=>doc.data()));
+    });
 
-},[])
+    return ()=>unsub();
 
-const sendMessage = async ()=>{
+  },[]);
 
-if(!text.trim()) return
+  useEffect(()=>{
+    bottomRef.current?.scrollIntoView({behavior:"smooth"});
+  },[messages]);
 
-const corrected = correctSentence(text)
+  const sendMessage = async ()=>{
 
-await addDoc(collection(db,"messages"),{
-text:text,
-corrected:corrected,
-name:name,
-time:serverTimestamp()
-})
+    if(!text.trim()) return;
 
-setText("")
-}
+    const corrected = correctSentence(text);
 
-const saveName = ()=>{
-if(!nameInput.trim()) return
+    await addDoc(collection(db,"messages"),{
+      text:text,
+      corrected:corrected,
+      name:name,
+      time:serverTimestamp()
+    });
 
-setName(nameInput)
-localStorage.setItem("chat-name",nameInput)
-}
+    setText("");
+  };
 
-const formatTime = (timestamp)=>{
-if(!timestamp) return ""
+  const saveName = ()=>{
+    if(!nameInput.trim()) return;
 
-const date = timestamp.toDate()
+    setName(nameInput);
+    localStorage.setItem("chat-name",nameInput);
+  };
 
-return date.toLocaleTimeString([],{
-hour:"2-digit",
-minute:"2-digit"
-})
-}
+  const formatTime = (timestamp)=>{
+    if(!timestamp) return "";
 
-if(!name){
+    const date = timestamp.toDate();
 
-return(
+    return date.toLocaleTimeString([],{
+      hour:"2-digit",
+      minute:"2-digit"
+    });
+  };
 
-<div className="login">
+  if(!name){
 
-<h2>Enter your name</h2>
+    return(
 
-<input
-value={nameInput}
-onChange={(e)=>setNameInput(e.target.value)}
-placeholder="Your name"
-/>
+      <div className="login">
 
-<button onClick={saveName}>Join Chat</button>
+        <h2>Enter your name</h2>
 
-</div>
+        <input
+          value={nameInput}
+          onChange={(e)=>setNameInput(e.target.value)}
+          placeholder="Your name"
+        />
 
-)
+        <button onClick={saveName}>
+          Join Chat
+        </button>
 
-}
+      </div>
 
-return(
+    );
 
-<div className="app">
+  }
 
-<h1>English Practice Chat</h1>
+  return(
 
-<div className="chat-box">
+    <div className="app">
 
-{messages.map((msg,i)=>{
+      <h1>English Practice Chat</h1>
 
-const mine = msg.name === name
+      <div className="chat-box">
 
-return(
+        {messages.map((msg,i)=>{
 
-<div
-key={i}
-className={mine ? "my-message":"other-message"}
->
+          const mine = msg.name === name;
 
-<div className="message-header">
+          return(
 
-<b>{msg.name}</b>
+            <div
+              key={i}
+              className={mine ? "my-message" : "other-message"}
+            >
 
-<span className="time">
-{formatTime(msg.time)}
-</span>
+              <div className="message-header">
 
-</div>
+                <b>{msg.name}</b>
 
-<div className="message-text">
-{msg.text}
-</div>
+                <span className="time">
+                  {formatTime(msg.time)}
+                </span>
 
-{msg.corrected !== msg.text &&(
+              </div>
 
-<div className="correction">
-{msg.corrected}
-</div>
+              <div className="message-text">
+                {msg.text}
+              </div>
 
-)}
+              {msg.corrected !== msg.text &&(
 
-</div>
+                <div className="correction">
+                  {msg.corrected}
+                </div>
 
-)
+              )}
 
-})}
+            </div>
 
-</div>
+          );
 
-<div className="input-box">
+        })}
 
-<input
-value={text}
-onChange={(e)=>setText(e.target.value)}
-placeholder="Type message..."
-/>
+        <div ref={bottomRef}></div>
 
-<button onClick={sendMessage}>Send</button>
+      </div>
 
-</div>
+      <div className="input-box">
 
-</div>
+        <input
+          value={text}
+          onChange={(e)=>setText(e.target.value)}
+          placeholder="Type message..."
+        />
 
-)
+        <button onClick={sendMessage}>
+          Send
+        </button>
+
+      </div>
+
+    </div>
+
+  );
 
 }
