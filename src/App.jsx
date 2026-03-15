@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-
 import { db } from "./firebase";
+
 import {
   collection,
   addDoc,
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp,
-  doc,
-  setDoc
+  serverTimestamp
 } from "firebase/firestore";
 
 import "./App.css";
@@ -33,7 +31,6 @@ export default function App(){
   const [text,setText] = useState("");
   const [name,setName] = useState(localStorage.getItem("chat-name"));
   const [nameInput,setNameInput] = useState("");
-  const [typingUser,setTypingUser] = useState("");
 
   const bottomRef = useRef(null);
 
@@ -41,33 +38,21 @@ export default function App(){
 
     const q = query(
       collection(db,"messages"),
-      orderBy("time")
+      orderBy("time","asc")
     );
 
-    const unsubMessages = onSnapshot(q,(snapshot)=>{
-      setMessages(snapshot.docs.map(doc=>doc.data()));
+    const unsub = onSnapshot(q,(snapshot)=>{
+      const msgs = snapshot.docs.map(doc=>({
+        id:doc.id,
+        ...doc.data()
+      }));
+
+      setMessages(msgs);
     });
 
-    const typingRef = collection(db,"typing");
+    return ()=>unsub();
 
-    const unsubTyping = onSnapshot(typingRef,(snapshot)=>{
-      snapshot.docs.forEach(doc=>{
-        const data = doc.data();
-
-        if(data.typing && data.user !== name){
-          setTypingUser(data.user);
-        }else{
-          setTypingUser("");
-        }
-      });
-    });
-
-    return ()=>{
-      unsubMessages();
-      unsubTyping();
-    };
-
-  },[name]);
+  },[]);
 
   useEffect(()=>{
     bottomRef.current?.scrollIntoView({behavior:"smooth"});
@@ -86,11 +71,6 @@ export default function App(){
       time:serverTimestamp()
     });
 
-    await setDoc(doc(db,"typing",name),{
-      user:name,
-      typing:false
-    });
-
     setText("");
   };
 
@@ -102,7 +82,7 @@ export default function App(){
   };
 
   const formatTime = (timestamp)=>{
-    if(!timestamp) return "";
+    if(!timestamp || !timestamp.toDate) return "";
 
     const date = timestamp.toDate();
 
@@ -140,18 +120,20 @@ export default function App(){
 
     <div className="app">
 
-      <h1>English Practice Chat</h1>
+      <div className="header">
+        English Practice Chat
+      </div>
 
       <div className="chat-box">
 
-        {messages.map((msg,i)=>{
+        {messages.map((msg)=>{
 
           const mine = msg.name === name;
 
           return(
 
             <div
-              key={i}
+              key={msg.id}
               className={mine ? "my-message" : "other-message"}
             >
 
@@ -183,12 +165,6 @@ export default function App(){
 
         })}
 
-        {typingUser && (
-          <div className="typing-indicator">
-            {typingUser} is typing...
-          </div>
-        )}
-
         <div ref={bottomRef}></div>
 
       </div>
@@ -197,14 +173,7 @@ export default function App(){
 
         <input
           value={text}
-          onChange={async (e)=>{
-            setText(e.target.value);
-
-            await setDoc(doc(db,"typing",name),{
-              user:name,
-              typing:true
-            });
-          }}
+          onChange={(e)=>setText(e.target.value)}
           placeholder="Type message..."
         />
 
@@ -219,3 +188,4 @@ export default function App(){
   );
 
 }
+
