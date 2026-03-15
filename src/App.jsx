@@ -147,17 +147,13 @@ export default function App(){
 
               </div>
 
-              <div className="message-text">
-                {msg.text}
-              </div>
+  <div className="message-text">
+  {msg.text}
+</div>
 
-              {msg.corrected !== msg.text &&(
-
-                <div className="correction">
-                  {msg.corrected}
-                </div>
-
-              )}
+<div className="correction">
+  ✓ Correct: {msg.corrected}
+</div>
 
             </div>
 
