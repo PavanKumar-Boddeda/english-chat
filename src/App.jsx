@@ -7,7 +7,9 @@ import {
   query,
   orderBy,
   onSnapshot,
-  serverTimestamp
+  serverTimestamp,
+  doc,
+  setDoc
 } from "firebase/firestore";
 
 import "./App.css";
@@ -31,6 +33,7 @@ export default function App(){
   const [text,setText] = useState("");
   const [name,setName] = useState(localStorage.getItem("chat-name"));
   const [nameInput,setNameInput] = useState("");
+  const [typingUser,setTypingUser] = useState("");
 
   const bottomRef = useRef(null);
 
@@ -41,13 +44,30 @@ export default function App(){
       orderBy("time")
     );
 
-    const unsub = onSnapshot(q,(snapshot)=>{
+    const unsubMessages = onSnapshot(q,(snapshot)=>{
       setMessages(snapshot.docs.map(doc=>doc.data()));
     });
 
-    return ()=>unsub();
+    const typingRef = collection(db,"typing");
 
-  },[]);
+    const unsubTyping = onSnapshot(typingRef,(snapshot)=>{
+      snapshot.docs.forEach(doc=>{
+        const data = doc.data();
+
+        if(data.typing && data.user !== name){
+          setTypingUser(data.user);
+        }else{
+          setTypingUser("");
+        }
+      });
+    });
+
+    return ()=>{
+      unsubMessages();
+      unsubTyping();
+    };
+
+  },[name]);
 
   useEffect(()=>{
     bottomRef.current?.scrollIntoView({behavior:"smooth"});
@@ -64,6 +84,11 @@ export default function App(){
       corrected:corrected,
       name:name,
       time:serverTimestamp()
+    });
+
+    await setDoc(doc(db,"typing",name),{
+      user:name,
+      typing:false
     });
 
     setText("");
@@ -158,6 +183,12 @@ export default function App(){
 
         })}
 
+        {typingUser && (
+          <div className="typing-indicator">
+            {typingUser} is typing...
+          </div>
+        )}
+
         <div ref={bottomRef}></div>
 
       </div>
@@ -166,7 +197,14 @@ export default function App(){
 
         <input
           value={text}
-          onChange={(e)=>setText(e.target.value)}
+          onChange={async (e)=>{
+            setText(e.target.value);
+
+            await setDoc(doc(db,"typing",name),{
+              user:name,
+              typing:true
+            });
+          }}
           placeholder="Type message..."
         />
 

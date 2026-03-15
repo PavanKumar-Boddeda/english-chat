@@ -136,3 +136,10 @@ background:#25d366;
 color:white;
 border-radius:6px;
 }
+
+.typing-indicator{
+font-size:13px;
+color:#555;
+margin-left:10px;
+font-style:italic;
+}
