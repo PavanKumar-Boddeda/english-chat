@@ -1,25 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+
 body{
 margin:0;
-font-family:Arial, Helvetica, sans-serif;
-background:#ece5dd;
+font-family:'Poppins',sans-serif;
+background:linear-gradient(135deg,#1f2937,#111827);
+color:white;
 }
 
 .app{
 display:flex;
 flex-direction:column;
 height:100vh;
-max-width:600px;
+max-width:500px;
 margin:auto;
-background:white;
+backdrop-filter:blur(10px);
+background:rgba(255,255,255,0.05);
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 10px 30px rgba(0,0,0,0.4);
 }
 
 h1{
 margin:0;
-padding:15px;
-background:#075e54;
-color:white;
+padding:16px;
+font-size:18px;
 text-align:center;
-font-size:20px;
+background:linear-gradient(90deg,#6366f1,#9333ea);
+color:white;
+letter-spacing:1px;
 }
 
 .chat-box{
@@ -36,23 +44,22 @@ background:#efeae2;
 
 .my-message{
 align-self:flex-end;
-background:#25d366;
-color:white;
+background:linear-gradient(135deg,#6366f1,#8b5cf6);
 padding:10px 14px;
-border-radius:14px 14px 0 14px;
+border-radius:16px 16px 4px 16px;
 max-width:75%;
-box-shadow:0 1px 3px rgba(0,0,0,0.2);
+box-shadow:0 5px 15px rgba(0,0,0,0.3);
 }
 
 /* OTHER PERSON MESSAGE */
 
 .other-message{
 align-self:flex-start;
-background:white;
+background:rgba(255,255,255,0.1);
 padding:10px 14px;
-border-radius:14px 14px 14px 0;
+border-radius:16px 16px 16px 4px;
 max-width:75%;
-box-shadow:0 1px 3px rgba(0,0,0,0.2);
+backdrop-filter:blur(10px);
 }
 
 .message-header{
@@ -86,16 +93,16 @@ color:#ff9800;
 .input-box{
 display:flex;
 padding:10px;
-background:white;
-border-top:1px solid #ccc;
+background:rgba(255,255,255,0.08);
 }
 
 .input-box input{
 flex:1;
 padding:10px;
-font-size:16px;
 border-radius:20px;
-border:1px solid #ccc;
+border:none;
+background:rgba(255,255,255,0.1);
+color:white;
 outline:none;
 }
 
@@ -103,10 +110,10 @@ outline:none;
 margin-left:8px;
 padding:10px 16px;
 border:none;
-background:#075e54;
-color:white;
 border-radius:20px;
-font-size:14px;
+background:linear-gradient(135deg,#6366f1,#9333ea);
+color:white;
+cursor:pointer;
 }
 
 /* LOGIN SCREEN */
