@@ -28,8 +28,7 @@ export default async function handler(req, res) {
       ]
     });
 
-    const corrected =
-      completion.choices[0].message.content.trim();
+    const corrected = completion.choices[0].message.content.trim();
 
     res.status(200).json({
       corrected: corrected
@@ -37,11 +36,10 @@ export default async function handler(req, res) {
 
   } catch (error) {
 
-    console.error("Correction API error:", error);
+    console.error(error);
 
     res.status(500).json({
-      corrected: null,
-      error: "Correction failed"
+      corrected: null
     });
 
   }
