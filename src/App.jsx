@@ -17,7 +17,8 @@ async function correctSentence(text) {
 
     const response = await fetch(
       "https://api.languagetool.org/v2/check",
-      {
+    console.log(data);     
+ {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded"
@@ -33,16 +34,21 @@ async function correctSentence(text) {
 
     let corrected = text;
 
-    data.matches.forEach(match => {
+    // Apply corrections from LAST to FIRST
+    const matches = data.matches.sort(
+      (a, b) => b.offset - a.offset
+    );
+
+    matches.forEach(match => {
 
       if (match.replacements.length > 0) {
 
         const suggestion = match.replacements[0].value;
 
         corrected =
-          corrected.substring(0, match.offset) +
+          corrected.slice(0, match.offset) +
           suggestion +
-          corrected.substring(match.offset + match.length);
+          corrected.slice(match.offset + match.length);
 
       }
 
