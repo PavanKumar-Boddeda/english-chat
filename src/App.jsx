@@ -75,16 +75,31 @@ export default function App(){
     localStorage.setItem("chat-name",nameInput);
   };
 
-  const formatTime = (timestamp)=>{
-    if(!timestamp) return "";
+   const formatTime = (timestamp) => {
 
+  if (!timestamp) return "";
+
+  // if Firebase Timestamp
+  if (timestamp.toDate) {
     const date = timestamp.toDate();
 
-    return date.toLocaleTimeString([],{
-      hour:"2-digit",
-      minute:"2-digit"
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
     });
-  };
+  }
+
+  // if normal JS date
+  const date = new Date(timestamp);
+
+  if (isNaN(date)) return "";
+
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+};
 
   if(!name){
 
