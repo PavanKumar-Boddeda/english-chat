@@ -13,83 +13,101 @@ import {
 import "./App.css";
 
 // AI correction function
-async function correctSentence(text){
+async function correctSentence(text) {
 
-  const res = await fetch("/api/correct",{
-    method:"POST",
-    headers:{
-      "Content-Type":"application/json"
-    },
-    body: JSON.stringify({ text })
-  });
+  try {
 
-  const data = await res.json();
+    const res = await fetch("/api/correct", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ text })
+    });
 
-  return data.corrected;
+    if (!res.ok) {
+      return text;
+    }
+
+    const data = await res.json();
+
+    return data.corrected || text;
+
+  } catch (err) {
+
+    console.log("Correction API error:", err);
+
+    return text;
+
+  }
+
 }
 
-export default function App(){
+export default function App() {
 
-  const [messages,setMessages] = useState([]);
-  const [text,setText] = useState("");
-  const [name,setName] = useState(localStorage.getItem("chat-name"));
-  const [nameInput,setNameInput] = useState("");
+  const [messages, setMessages] = useState([]);
+  const [text, setText] = useState("");
+  const [name, setName] = useState(localStorage.getItem("chat-name"));
+  const [nameInput, setNameInput] = useState("");
 
   const bottomRef = useRef(null);
 
-  useEffect(()=>{
+  useEffect(() => {
 
     const q = query(
-      collection(db,"messages"),
+      collection(db, "messages"),
       orderBy("time")
     );
 
-    const unsub = onSnapshot(q,(snapshot)=>{
-      setMessages(snapshot.docs.map(doc=>doc.data()));
+    const unsub = onSnapshot(q, (snapshot) => {
+      setMessages(snapshot.docs.map(doc => doc.data()));
     });
 
-    return ()=>unsub();
+    return () => unsub();
 
-  },[]);
+  }, []);
 
-  useEffect(()=>{
-    bottomRef.current?.scrollIntoView({behavior:"smooth"});
-  },[messages]);
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   const sendMessage = async () => {
 
     if (!text.trim()) return;
 
-    const corrected = await correctSentence(text);
-
-    await addDoc(collection(db,"messages"),{
-      text:text,
-      corrected:corrected,
-      name:name,
-      time:serverTimestamp()
-    });
+    const original = text;
 
     setText("");
+
+    const corrected = await correctSentence(original);
+
+    await addDoc(collection(db, "messages"), {
+      text: original,
+      corrected: corrected,
+      name: name,
+      time: serverTimestamp()
+    });
+
   };
 
-  const saveName = ()=>{
+  const saveName = () => {
 
-    if(!nameInput.trim()) return;
+    if (!nameInput.trim()) return;
 
     setName(nameInput);
-    localStorage.setItem("chat-name",nameInput);
+    localStorage.setItem("chat-name", nameInput);
 
   };
 
-  const formatTime = (timestamp)=>{
+  const formatTime = (timestamp) => {
 
     if (!timestamp) return "";
 
     if (timestamp.toDate) {
       const date = timestamp.toDate();
-      return date.toLocaleTimeString([],{
-        hour:"2-digit",
-        minute:"2-digit"
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit"
       });
     }
 
@@ -97,15 +115,16 @@ export default function App(){
 
     if (isNaN(date)) return "";
 
-    return date.toLocaleTimeString([],{
-      hour:"2-digit",
-      minute:"2-digit"
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
     });
+
   };
 
-  if(!name){
+  if (!name) {
 
-    return(
+    return (
 
       <div className="login">
 
@@ -113,7 +132,7 @@ export default function App(){
 
         <input
           value={nameInput}
-          onChange={(e)=>setNameInput(e.target.value)}
+          onChange={(e) => setNameInput(e.target.value)}
           placeholder="Your name"
         />
 
@@ -127,7 +146,7 @@ export default function App(){
 
   }
 
-  return(
+  return (
 
     <div className="app">
 
@@ -135,11 +154,11 @@ export default function App(){
 
       <div className="chat-box">
 
-        {messages.map((msg,i)=>{
+        {messages.map((msg, i) => {
 
           const mine = msg.name === name;
 
-          return(
+          return (
 
             <div
               key={i}
@@ -182,7 +201,7 @@ export default function App(){
 
         <input
           value={text}
-          onChange={(e)=>setText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           placeholder="Type message..."
         />
 
