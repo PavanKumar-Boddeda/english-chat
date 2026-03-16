@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { db } from "./firebase";
+
 import {
   collection,
   addDoc,
@@ -11,58 +12,20 @@ import {
 
 import "./App.css";
 
-async function correctSentence(text) {
+// AI correction function
+async function correctSentence(text){
 
-  try {
+  const res = await fetch("/api/correct",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body: JSON.stringify({ text })
+  });
 
-    const response = await fetch(
-      "https://api.languagetool.org/v2/check",
-    console.log(data);     
- {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded"
-        },
-        body: new URLSearchParams({
-          text: text,
-          language: "en-US"
-        })
-      }
-    );
+  const data = await res.json();
 
-    const data = await response.json();
-
-    let corrected = text;
-
-    // Apply corrections from LAST to FIRST
-    const matches = data.matches.sort(
-      (a, b) => b.offset - a.offset
-    );
-
-    matches.forEach(match => {
-
-      if (match.replacements.length > 0) {
-
-        const suggestion = match.replacements[0].value;
-
-        corrected =
-          corrected.slice(0, match.offset) +
-          suggestion +
-          corrected.slice(match.offset + match.length);
-
-      }
-
-    });
-
-    return corrected;
-
-  } catch (error) {
-
-    console.log("Grammar API error:", error);
-    return text;
-
-  }
-
+  return data.corrected;
 }
 
 export default function App(){
@@ -95,53 +58,50 @@ export default function App(){
 
   const sendMessage = async () => {
 
-  if (!text.trim()) return;
+    if (!text.trim()) return;
 
-  const corrected = await correctSentence(text);
+    const corrected = await correctSentence(text);
 
-  await addDoc(collection(db, "messages"), {
-    text: text,
-    corrected: corrected,
-    name: name,
-    time: serverTimestamp()
-  });
+    await addDoc(collection(db,"messages"),{
+      text:text,
+      corrected:corrected,
+      name:name,
+      time:serverTimestamp()
+    });
 
-  setText("");
-
-};
+    setText("");
+  };
 
   const saveName = ()=>{
+
     if(!nameInput.trim()) return;
 
     setName(nameInput);
     localStorage.setItem("chat-name",nameInput);
+
   };
 
-   const formatTime = (timestamp) => {
+  const formatTime = (timestamp)=>{
 
-  if (!timestamp) return "";
+    if (!timestamp) return "";
 
-  // if Firebase Timestamp
-  if (timestamp.toDate) {
-    const date = timestamp.toDate();
+    if (timestamp.toDate) {
+      const date = timestamp.toDate();
+      return date.toLocaleTimeString([],{
+        hour:"2-digit",
+        minute:"2-digit"
+      });
+    }
 
-    return date.toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
+    const date = new Date(timestamp);
+
+    if (isNaN(date)) return "";
+
+    return date.toLocaleTimeString([],{
+      hour:"2-digit",
+      minute:"2-digit"
     });
-  }
-
-  // if normal JS date
-  const date = new Date(timestamp);
-
-  if (isNaN(date)) return "";
-
-  return date.toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-
-};
+  };
 
   if(!name){
 
@@ -196,17 +156,17 @@ export default function App(){
 
               </div>
 
-      <div className="message-text">
-  {msg.text}
-</div>
+              <div className="message-text">
+                {msg.text}
+              </div>
 
-{msg.corrected && msg.corrected !== msg.text && (
+              {msg.corrected && msg.corrected !== msg.text && (
 
-  <div className="correction">
-    ✓ Correct: {msg.corrected}
-  </div>
+                <div className="correction">
+                  ✓ Correct: {msg.corrected}
+                </div>
 
-)}
+              )}
 
             </div>
 
