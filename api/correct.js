@@ -2,19 +2,48 @@ import OpenAI from "openai";
 
 export default async function handler(req, res) {
 
-  const client = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-  });
+  try {
 
-  const { text } = req.body;
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY
+    });
 
-  const response = await client.responses.create({
-    model: "gpt-4.1-mini",
-    input: `Correct the following sentence into perfect English. Return only the corrected sentence: ${text}`
-  });
+    const { text } = req.body;
 
-  const corrected = response.output[0].content[0].text;
+    if (!text) {
+      return res.status(400).json({ error: "No text provided" });
+    }
 
-  res.status(200).json({ corrected });
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        {
+          role: "system",
+          content: "Correct the grammar of the sentence and return only the corrected sentence."
+        },
+        {
+          role: "user",
+          content: text
+        }
+      ]
+    });
+
+    const corrected =
+      completion.choices[0].message.content.trim();
+
+    res.status(200).json({
+      corrected: corrected
+    });
+
+  } catch (error) {
+
+    console.error("Correction API error:", error);
+
+    res.status(500).json({
+      corrected: null,
+      error: "Correction failed"
+    });
+
+  }
 
 }

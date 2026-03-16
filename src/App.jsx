@@ -71,24 +71,36 @@ export default function App() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const sendMessage = async () => {
+const sendMessage = async () => {
 
-    if (!text.trim()) return;
+  if (!text.trim()) return;
 
-    const original = text;
+  const original = text;
 
-    setText("");
+  // clear input immediately
+  setText("");
 
-    const corrected = await correctSentence(original);
+  let corrected = original;
 
-    await addDoc(collection(db, "messages"), {
-      text: original,
-      corrected: corrected,
-      name: name,
-      time: serverTimestamp()
-    });
+  try {
 
-  };
+    corrected = await correctSentence(original);
+
+  } catch (err) {
+
+    console.log("Correction failed, sending original");
+
+  }
+
+  await addDoc(collection(db, "messages"), {
+    text: original,
+    corrected: corrected,
+    name: name,
+    time: serverTimestamp()
+  });
+
+};  
+
 
   const saveName = () => {
 
