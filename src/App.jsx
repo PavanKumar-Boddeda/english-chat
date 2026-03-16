@@ -11,17 +11,52 @@ import {
 
 import "./App.css";
 
-function correctSentence(sentence){
-  if(!sentence) return sentence;
+async function correctSentence(text) {
 
-  let s = sentence.trim();
-  s = s.charAt(0).toUpperCase() + s.slice(1);
+  try {
 
-  if(!/[.!?]$/.test(s)){
-    s += ".";
+    const response = await fetch(
+      "https://api.languagetool.org/v2/check",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: new URLSearchParams({
+          text: text,
+          language: "en-US"
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    let corrected = text;
+
+    data.matches.forEach(match => {
+
+      if (match.replacements.length > 0) {
+
+        const suggestion = match.replacements[0].value;
+
+        corrected =
+          corrected.substring(0, match.offset) +
+          suggestion +
+          corrected.substring(match.offset + match.length);
+
+      }
+
+    });
+
+    return corrected;
+
+  } catch (error) {
+
+    console.log("Grammar API error:", error);
+    return text;
+
   }
 
-  return s;
 }
 
 export default function App(){
@@ -52,21 +87,22 @@ export default function App(){
     bottomRef.current?.scrollIntoView({behavior:"smooth"});
   },[messages]);
 
-  const sendMessage = async ()=>{
+  const sendMessage = async () => {
 
-    if(!text.trim()) return;
+  if (!text.trim()) return;
 
-    const corrected = correctSentence(text);
+  const corrected = await correctSentence(text);
 
-    await addDoc(collection(db,"messages"),{
-      text:text,
-      corrected:corrected,
-      name:name,
-      time:serverTimestamp()
-    });
+  await addDoc(collection(db, "messages"), {
+    text: text,
+    corrected: corrected,
+    name: name,
+    time: serverTimestamp()
+  });
 
-    setText("");
-  };
+  setText("");
+
+};
 
   const saveName = ()=>{
     if(!nameInput.trim()) return;
@@ -154,17 +190,17 @@ export default function App(){
 
               </div>
 
-              <div className="message-text">
-                {msg.text}
-              </div>
+      <div className="message-text">
+  {msg.text}
+</div>
 
-              {msg.corrected && msg.corrected !== msg.text && (
+{msg.corrected && msg.corrected !== msg.text && (
 
-                <div className="correction">
-                  ✓ Correct: {msg.corrected}
-                </div>
+  <div className="correction">
+    ✓ Correct: {msg.corrected}
+  </div>
 
-              )}
+)}
 
             </div>
 
