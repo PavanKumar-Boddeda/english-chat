@@ -1,11 +1,22 @@
 export default async function handler(req, res) {
   try {
-    const { message } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: "No message provided" });
+    // ✅ SAFE BODY PARSE
+    let body = req.body;
+
+    if (typeof body === "string") {
+      body = JSON.parse(body);
     }
 
+    const message = body?.message;
+
+    if (!message) {
+      return res.status(400).json({
+        corrected: "No message received"
+      });
+    }
+
+    // ✅ CALL OPENAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -17,7 +28,7 @@ export default async function handler(req, res) {
         messages: [
           {
             role: "system",
-            content: "Correct the grammar and return only the corrected sentence."
+            content: "Correct the sentence grammatically and return only corrected sentence."
           },
           {
             role: "user",
@@ -29,19 +40,19 @@ export default async function handler(req, res) {
 
     const data = await response.json();
 
-    console.log("API RESPONSE:", data); // debug
+    console.log("API DATA:", data);
 
     const corrected = data?.choices?.[0]?.message?.content;
 
-    res.status(200).json({
-      corrected: corrected || "No correction found",
+    return res.status(200).json({
+      corrected: corrected || message
     });
 
   } catch (error) {
     console.error("SERVER ERROR:", error);
 
-    res.status(500).json({
-      error: "Internal server error",
+    return res.status(500).json({
+      corrected: "Error correcting sentence"
     });
   }
 }
