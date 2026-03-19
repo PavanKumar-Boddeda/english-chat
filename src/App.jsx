@@ -22,7 +22,7 @@ async function correctSentence(text) {
       headers: {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ message: text })
     });
 
     if (!res.ok) {
